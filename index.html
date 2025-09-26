@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Cards Premium - Metodología de la Investigación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .btn-option {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-option:hover::before {
+            left: 100%;
+        }
+        
+        .btn-option.correct {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white !important;
+            border-color: #047857 !important;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-option.incorrect {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            color: white !important;
+            border-color: #b91c1c !important;
+            transform: scale(0.98);
+        }
+        
+        .feedback-animation {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.33);
+                opacity: 1;
+            }
+            80%, 100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+        
+        .mode-selector {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .question-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .topic-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .topic-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+        
+        .icon-bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #fbbf24;
+            animation: confetti-fall 3s linear infinite;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Modal de revisión de errores */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .error-card {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+        }
+        
+        .correct-card {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border: 1px solid #10b981;
+        }
+        
+        /* Estadísticas */
+        .record-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+    <!-- Contenedor principal -->
+    <div id="app-container" class="min-h-screen p-4 md:p-8">
+        
+        <!-- Pantalla de Inicio -->
+        <div id="home-screen" class="max-w-6xl mx-auto">
+            <!-- Header con efecto flotante -->
+            <header class="text-center mb-12 floating-element">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-6 pulse-ring">
+                    <i class="fas fa-brain text-4xl text-white"></i>
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">
+                    Flash Cards Premium
+                </h1>
+                <p class="text-xl md:text-2xl text-white/80 font-medium">
+                    Metodología de la Investigación I
+                </p>
+                <div class="mt-6">
+                    <span class="inline-block bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium">
+                        <i class="fas fa-graduation-cap mr-2"></i>
+                        6 Temas • 60 Preguntas
+                    </span>
+                </div>
+            </header>
+
+            <!-- Selector de modo de juego -->
+            <div class="mode-selector rounded-2xl p-6 mb-8 max-w-2xl mx-auto">
+                <h2 class="text-xl font-bold text-white mb-4 text-center">
+                    <i class="fas fa-gamepad mr-2"></i>
+                    Elige tu modo de estudio
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="study-mode-btn" class="mode-btn bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <div class="text-center">
+                            <i class="fas fa-book-open text-2xl mb-2"></i>
+                            <h3 class="font-bold">Modo Estudio</h3>
+                            <p class="text-sm opacity-90">Aprende con retroalimentación inmediata</p>
+                        </div>
+                    </button>
+                    <button id="exam-mode-btn" class="mode-btn bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <div class="text-center">
+                            <i class="fas fa-stopwatch text-2xl mb-2"></i>
+                            <h3 class="font-bold">Modo Examen</h3>
+                            <p class="text-sm opacity-90">Simulacro con tiempo límite</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selección de temas -->
+            <main>
+                <h2 class="text-2xl font-bold text-white mb-6 text-center">
+                    <i class="fas fa-list-ul mr-2"></i>
+                    Selecciona un tema para comenzar
+                </h2>
+                <div id="topic-selection" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Los temas se insertarán dinámicamente -->
+                </div>
+            </main>
+        </div>
+
+        <!-- Pantalla del Quiz -->
+        <div id="quiz-screen" class="hidden max-w-4xl mx-auto">
+            <!-- Barra de progreso -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 id="quiz-topic-title" class="text-2xl font-bold text-white"></h2>
+                    <div class="flex items-center space-x-4">
+                        <div id="timer" class="hidden bg-white/20 text-white px-4 py-2 rounded-full font-mono">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span id="time-remaining">00:00</span>
+                        </div>
+                        <div id="progress-indicator" class="bg-white/20 text-white px-4 py-2 rounded-full font-medium"></div>
+                    </div>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                    <div id="progress-bar" class="progress-bar bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de pregunta -->
+            <div class="question-card rounded-2xl p-8 mb-6">
+                <div class="mb-6">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                            <i class="fas fa-question text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-slate-500">Pregunta</span>
+                    </div>
+                    <p id="question-text" class="text-xl text-slate-800 font-medium leading-relaxed"></p>
+                </div>
+
+                <div id="options-container" class="space-y-3">
+                    <!-- Opciones de respuesta -->
+                </div>
+
+                <div id="feedback-container" class="mt-6 p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 hidden">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-lightbulb text-yellow-500 text-xl mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-blue-800 mb-1">Explicación</p>
+                            <p id="feedback-text" class="text-sm text-slate-700 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de navegación -->
+            <div class="flex justify-between items-center">
+                <button id="prev-btn" class="hidden bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl transition-all duration-300">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Anterior
+                </button>
+                <div class="flex-1"></div>
+                <button id="next-btn" class="hidden bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl transition-all duration-300">
+                    Siguiente
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pantalla de Resultados -->
+        <div id="results-screen" class="hidden max-w-4xl mx-auto">
+            <div class="stats-card rounded-2xl p-8 text-center">
+                <!-- Animación de confeti para puntuaciones altas -->
+                <div id="confetti-container" class="hidden"></div>
+                
+                <div class="mb-8">
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mb-4">
+                        <i class="fas fa-trophy text-4xl text-white"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-900 mb-2">¡Excelente trabajo!</h2>
+                    <p class="text-lg text-slate-600 mb-4">
+                        Resultados para: <span id="results-topic-title" class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"></span>
+                    </p>
+                </div>
+
+                <!-- Estadísticas principales -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-green-100 to-green-200 p-6 rounded-xl">
+                        <div class="text-3xl font-black text-green-700 mb-1" id="final-score"></div>
+                        <p class="text-green-600 font-medium">Respuestas Correctas</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-200 p-6 rounded-xl">
+                        <div class="text-3xl font-black text-blue-700 mb-1" id="accuracy-percentage"></div>
+                        <p class="text-blue-600 font-medium">Precisión</p>
+                        <div id="record-badge" class="hidden record-badge mt-2 px-2 py-1 rounded-full text-xs font-bold">
+                            <i class="fas fa-crown mr-1"></i>
+                            ¡Nuevo Récord!
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-100 to-purple-200 p-6 rounded-xl">
+                        <div class="text-3xl font-black text-purple-700 mb-1" id="time-taken"></div>
+                        <p class="text-purple-600 font-medium">Tiempo Total</p>
+                    </div>
+                </div>
+
+                <!-- Récords personales -->
+                <div id="personal-records" class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-200 mb-8 hidden">
+                    <h3 class="font-bold text-indigo-800 mb-3">
+                        <i class="fas fa-medal mr-2"></i>
+                        Tus Mejores Récords en este Tema
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                        <div class="bg-white/70 p-4 rounded-lg">
+                            <p class="text-sm text-indigo-600 font-medium">Mejor Puntuación</p>
+                            <p class="text-2xl font-black text-indigo-800" id="best-score">-</p>
+                        </div>
+                        <div class="bg-white/70 p-4 rounded-lg">
+                            <p class="text-sm text-indigo-600 font-medium">Mejor Tiempo</p>
+                            <p class="text-2xl font-black text-indigo-800" id="best-time">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones personalizadas -->
+                <div id="recommendations-container" class="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-xl border border-amber-200 mb-8">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-graduation-cap text-amber-600 text-xl mt-1"></i>
+                        </div>
+                        <div class="ml-4 text-left">
+                            <h3 class="font-bold text-amber-800 mb-2">Recomendaciones de Estudio</h3>
+                            <p id="recommendations-text" class="text-amber-700 text-sm leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button id="restart-quiz-btn" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-redo mr-2"></i>
+                        Repetir este tema
+                    </button>
+                    <button id="review-mistakes-btn" class="hidden bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-search mr-2"></i>
+                        Revisar errores
+                    </button>
+                    <button id="back-to-home-btn" class="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-home mr-2"></i>
+                        Ver otros temas
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Revisión de Errores -->
+        <div id="review-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="modal-overlay absolute inset-0" onclick="closeReviewModal()"></div>
+            <div class="modal-content relative rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-900">
+                        <i class="fas fa-search mr-2 text-orange-500"></i>
+                        Revisar Errores
+                    </h2>
+                    <button onclick="closeReviewModal()" class="text-slate-400 hover:text-slate-600 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="mistakes-container" class="space-y-6">
+                    <!-- Los errores se insertarán dinámicamente -->
+                </div>
+                
+                <div class="mt-6 text-center">
+                    <button onclick="closeReviewModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300">
+                        <i class="fas fa-check mr-2"></i>
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos del quiz (mismo contenido que el original)
+        const quizData = {
+            "Problema e Hipótesis": {
+                file: "Tema 1 y 3- Problemas e Hipótesis.pdf",
+                questions: [
+                    { question: "Un 'problema de investigación' bien formulado debe expresar principalmente...", options: ["Una opinión personal", "Una pregunta ya resuelta", "Una relación entre variables", "Un tema muy amplio"], correctAnswer: "Una relación entre variables", feedback: "Correcto. El núcleo de un problema científico es la pregunta sobre cómo se relacionan dos o más variables." },
+                    { question: "¿Cuál de estas NO es una característica de una buena hipótesis científica?", options: ["Ser comprobable empíricamente", "Ser una pregunta moral o de valor", "Ser un enunciado declarativo", "Relacionar variables"], correctAnswer: "Ser una pregunta moral o de valor", feedback: "Exacto. La ciencia no puede responder preguntas de valor como '¿qué es mejor?', ya que no son empíricamente contrastables." },
+                    { question: "Una hipótesis funciona en la investigación como...", options: ["Una conclusión definitiva", "Un resumen de los datos", "Una respuesta tentativa al problema", "Un juicio de valor"], correctAnswer: "Una respuesta tentativa al problema", feedback: "Correcto. La hipótesis es una conjetura informada que la investigación buscará confirmar o refutar." },
+                    { question: "El enunciado 'La democracia es el mejor sistema de gobierno' es un problema de investigación científico.", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. Es un enunciado de valor, no una relación entre variables medibles, por lo tanto no es un problema científico." },
+                    { question: "La principal virtud de formular un problema como pregunta es que...", options: ["Es más fácil de escribir", "Presenta el problema de forma directa", "Ocupa menos espacio", "Es una tradición"], correctAnswer: "Presenta el problema de forma directa", feedback: "Así es. La forma interrogativa elimina ambigüedades y enfoca la investigación de manera clara." },
+                    { question: "Las hipótesis son consideradas 'puentes' entre...", options: ["El investigador y los participantes", "El problema y la conclusión", "La teoría y la investigación empírica", "Los datos y el análisis"], correctAnswer: "La teoría y la investigación empírica", feedback: "Correcto. Las hipótesis se deducen de la teoría y se prueban con datos empíricos, conectando ambos mundos." },
+                    { question: "Si un problema es demasiado específico, corre el riesgo de ser...", options: ["Relevante", "Trivial", "Intestable", "Complejo"], correctAnswer: "Trivial", feedback: "Efectivamente. Un problema demasiado acotado puede ser investigable, pero sus resultados podrían carecer de importancia o generalidad." },
+                    { question: "El enunciado del problema 'La historia de la psicología' es adecuado para una investigación.", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. No plantea una relación entre variables, es simplemente un tema. Un problema podría ser '¿Cómo se relaciona la clase social con el acceso a terapia psicológica?'." },
+                    { question: "Las hipótesis dirigen la investigación porque...", options: ["Son la primera parte del informe", "Indican al investigador qué debe hacer y observar", "Contienen todos los datos", "Son fáciles de recordar"], correctAnswer: "Indican al investigador qué debe hacer y observar", feedback: "¡Exacto! Al postular una relación, la hipótesis le dice al investigador qué variables medir y qué tipo de relación buscar." },
+                    { question: "Un problema científico debe implicar la posibilidad de ser sometido a...", options: ["Un debate filosófico", "Una votación popular", "Una prueba empírica", "La aprobación de un comité"], correctAnswer: "Una prueba empírica", feedback: "Correcto. Si no se pueden observar y medir sus variables, no es un problema que la ciencia pueda abordar." }
+                ]
+            },
+            "Objetivos de Investigación": {
+                file: "Tema 2 - Los objetivos de investigación.pdf",
+                questions: [
+                    { question: "Los objetivos de una investigación suelen empezar con...", options: ["Un sustantivo", "Un adjetivo", "Un verbo en infinitivo", "Una pregunta"], correctAnswer: "Un verbo en infinitivo", feedback: "Correcto. Verbos como 'analizar', 'describir' o 'comparar' indican la acción de conocimiento que se busca." },
+                    { question: "El enunciado que expresa el fin último y global de la investigación es el...", options: ["Objetivo específico", "Objetivo general", "Propósito", "Resumen"], correctAnswer: "Objetivo general", feedback: "Así es. El objetivo general responde directamente a la pregunta de investigación y engloba todo el estudio." },
+                    { question: "¿Cuántos objetivos generales debe tener una investigación?", options: ["Varios, según la complejidad", "Al menos tres", "Solo uno", "Depende del presupuesto"], correctAnswer: "Solo uno", feedback: "Correcto. Una investigación debe tener un único objetivo general para mantener el foco y la coherencia." },
+                    { question: "Los objetivos específicos son...", options: ["Metas secundarias y opcionales", "Los pasos necesarios para alcanzar el objetivo general", "Resúmenes de cada capítulo", "Las preguntas de los participantes"], correctAnswer: "Los pasos necesarios para alcanzar el objetivo general", feedback: "Exacto. Son las acciones concretas y secuenciales que, en conjunto, permiten cumplir el objetivo general." },
+                    { question: "Los objetivos de investigación deben responder a la pregunta...", options: ["¿Para qué se investiga?", "¿Por qué se investiga?", "¿Qué se pretende con la investigación?", "¿Quién financia la investigación?"], correctAnswer: "¿Qué se pretende con la investigación?", feedback: "Correcto. Se centran en el 'qué' se busca conocer o lograr, no en la justificación o el 'para qué'." },
+                    { question: "Un buen objetivo debe ser claro, preciso y...", options: ["Ambicioso", "Complicado", "Largo", "Realista"], correctAnswer: "Realista", feedback: "Así es. Los objetivos deben ser susceptibles de alcanzarse con los recursos y la metodología disponibles." },
+                    { question: "La frase 'Mejorar la calidad de vida de los pacientes' es un buen objetivo de investigación.", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. Contiene un juicio de valor ('mejorar') y no es lo suficientemente preciso. Sería mejor algo como 'Describir los factores que influyen en la calidad de vida...'" },
+                    { question: "Los objetivos son considerados el 'GPS' de la investigación porque...", options: ["Son tecnológicos", "Orientan todas las fases del proceso", "Se pueden compartir fácilmente", "Indican una ubicación"], correctAnswer: "Orientan todas las fases del proceso", feedback: "¡Muy bien! Guían desde la metodología hasta el análisis, asegurando que el estudio no se desvíe de su propósito." },
+                    { question: "La formulación de objetivos debe derivarse de...", options: ["La opinión del investigador", "Los recursos disponibles", "El marco teórico y el problema", "Las conclusiones esperadas"], correctAnswer: "El marco teórico y el problema", feedback: "Correcto. Los objetivos deben ser coherentes con el problema planteado y los conceptos definidos en la teoría." },
+                    { question: "Un error frecuente al formular objetivos es...", options: ["Usar verbos simples", "Ser demasiado conciso", "Confundir el objetivo general con el título", "Tener pocos objetivos específicos"], correctAnswer: "Confundir el objetivo general con el título", feedback: "Efectivamente. El título es el nombre del trabajo, mientras que el objetivo general es el enunciado de la meta a alcanzar." }
+                ]
+            },
+            "Marco Teórico": {
+                file: "El papel de la Teoría en la Investigación.pdf",
+                questions: [
+                    { question: "La función principal del marco teórico es...", options: ["Hacer el trabajo más largo", "Listar todos los autores del tema", "Dar sustento conceptual y guiar la investigación", "Presentar los datos"], correctAnswer: "Dar sustento conceptual y guiar la investigación", feedback: "Correcto. La teoría proporciona el 'lente' a través del cual se mira el problema y se interpretan los hallazgos." },
+                    { question: "Una teoría científica se define como un conjunto de conceptos...", options: ["Aislados y sin relación", "Populares en un momento dado", "Lógicamente interconectados", "Difíciles de entender"], correctAnswer: "Lógicamente interconectados", feedback: "Exacto. La clave de una teoría no son los conceptos en sí, sino el sistema de relaciones que se establece entre ellos." },
+                    { question: "El marco teórico ayuda al investigador a...", options: ["Evitar la recolección de datos", "Definir los criterios de relevancia", "Ignorar estudios previos", "Hacer el estudio más subjetivo"], correctAnswer: "Definir los criterios de relevancia", feedback: "Así es. La teoría nos dice qué información es importante para nuestro problema y cuál podemos desestimar." },
+                    { question: "La relación entre teoría y método es de...", options: ["Independencia total", "Oposición", "Unidad constitutiva", "Secuencia fija"], correctAnswer: "Unidad constitutiva", feedback: "Correcto. No se puede pensar en el método sin una teoría que lo guíe, ni en una teoría sin un método para aplicarla. Forman una unidad." },
+                    { question: "Según la perspectiva deductiva, la teoría se ubica...", options: ["Al final del proceso, como resultado", "En medio del análisis", "Al inicio del proceso, como punto de partida", "No se utiliza"], correctAnswer: "Al inicio del proceso, como punto de partida", feedback: "Correcto. En el enfoque deductivo (hipotético-deductivo), se parte de una teoría para derivar hipótesis que luego se contrastan con los datos." },
+                    { question: "Según la perspectiva inductiva, la teoría...", options: ["Se genera a partir de los datos", "Es un modelo a contrastar", "Se define a priori", "Es irrelevante"], correctAnswer: "Se genera a partir de los datos", feedback: "¡Muy bien! En el enfoque inductivo, se observan los datos y, a partir de ellos, se construye o genera una nueva teoría." },
+                    { question: "El aparato conceptual de la teoría opera como...", options: ["Un obstáculo para la observación", "Un código interpretativo de la realidad", "Un listado de definiciones", "Una simple formalidad"], correctAnswer: "Un código interpretativo de la realidad", feedback: "Exacto. Las categorías teóricas nos permiten dar sentido y ordenar la realidad que observamos." },
+                    { question: "La teoría científica refleja la realidad de forma especular (como un espejo).", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. La ciencia moderna entiende que la teoría no es un reflejo perfecto, sino una interpretación o construcción de sentido sobre la realidad." },
+                    { question: "La ciencia es metódica. Esto significa que...", options: ["Siempre sigue los mismos pasos", "Solo es posible conocer científicamente a través de un método", "Es aburrida y repetitiva", "Usa siempre fórmulas matemáticas"], correctAnswer: "Solo es posible conocer científicamente a través de un método", feedback: "Correcto. El método es el camino que estructura el quehacer científico y lo diferencia de otras formas de conocimiento." },
+                    { question: "El marco teórico sirve para justificar la hipótesis y definir los conceptos que se usarán.", options: ["Verdadero", "Falso"], correctAnswer: "Verdadero", feedback: "Así es. Dos de sus funciones clave son dar un soporte lógico a la hipótesis y aclarar el significado de los términos centrales del estudio." }
+                ]
+            },
+            "Constructos y Variables": {
+                file: "Constructo, Variables y Definiciones - Kerlinger y Lee (2002) Cap. 3.pdf",
+                questions: [
+                    { question: "El proceso de definir un concepto abstracto para que pueda ser medido se llama...", options: ["Teorización", "Conceptualización", "Análisis", "Operacionalización"], correctAnswer: "Operacionalización", feedback: "Correcto. Operacionalizar es el paso crucial que traduce un constructo teórico en algo observable y medible." },
+                    { question: "En un experimento, la variable que el investigador manipula es la...", options: ["Variable dependiente", "Variable de control", "Variable extraña", "Variable independiente"], correctAnswer: "Variable independiente", feedback: "Así es. La variable independiente (VI) es la 'causa' supuesta que el investigador modifica para ver su efecto." },
+                    { question: "La 'ansiedad' es un ejemplo de...", options: ["Una variable observable", "Un dato empírico", "Un constructo o variable latente", "Una definición operacional"], correctAnswer: "Un constructo o variable latente", feedback: "Correcto. No podemos ver la 'ansiedad' directamente, solo podemos inferirla a partir de comportamientos o mediciones (variables observadas)." },
+                    { question: "La variable 'género' (masculino/femenino) es un tipo de variable...", options: ["Continua", "Activa", "Atributo", "Dependiente"], correctAnswer: "Atributo", feedback: "Exacto. Es una característica preexistente del sujeto que el investigador no puede manipular, solo medir o clasificar. Por eso es una variable atributo." },
+                    { question: "'Definir la inteligencia como el puntaje en el test de CI' es una definición...", options: ["Constitutiva", "Teórica", "Operacional", "Conceptual"], correctAnswer: "Operacional", feedback: "Correcto. Especifica la operación concreta (aplicar un test) que se usará para medir el constructo 'inteligencia'." },
+                    { question: "Una variable que puede tomar cualquier valor dentro de un rango (ej. altura, peso) se llama...", options: ["Categórica", "Dicotómica", "Continua", "Latente"], correctAnswer: "Continua", feedback: "Así es. Las variables continuas permiten valores intermedios y reflejan un orden de magnitud." },
+                    { question: "En el enunciado 'A mayor motivación, mayor rendimiento académico', el rendimiento académico es la...", options: ["Variable independiente", "Variable dependiente", "Variable de control", "Variable activa"], correctAnswer: "Variable dependiente", feedback: "Correcto. El rendimiento académico es el 'efecto' supuesto que varía en función de los cambios en la motivación (la VI)." },
+                    { question: "Un constructo y un concepto son exactamente lo mismo.", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. Un constructo es un tipo especial de concepto, adoptado deliberadamente para un propósito científico y definido para poder ser medido." },
+                    { question: "Una definición constitutiva define un constructo usando...", options: ["Operaciones de medida", "Datos numéricos", "Otros constructos", "Ejemplos concretos"], correctAnswer: "Otros constructos", feedback: "Correcto. Es como una definición de diccionario, explica un concepto a través de otros conceptos (ej: 'ansiedad' es 'temor subjetivo')." },
+                    { question: "La variable 'tipo de terapia' (cognitiva vs. conductual) en un estudio es una variable...", options: ["Activa", "Atributo", "Continua", "Latente"], correctAnswer: "Activa", feedback: "Correcto. El investigador puede 'activamente' asignar a los participantes a un tipo de terapia u otro, por lo tanto, la está manipulando." }
+                ]
+            },
+            "Diseños de Investigación": {
+                file: "02 - Diseño de Investigación - Propósito y Principio - Kerlinger cap 18.pdf",
+                questions: [
+                    { question: "El principio 'MAX-MIN-CON' se refiere a la necesidad de...", options: ["Publicar los resultados", "Controlar la varianza", "Formular buenas hipótesis", "Elegir un buen tema"], correctAnswer: "Controlar la varianza", feedback: "Correcto. Es el principio técnico fundamental del diseño: Maximizar la varianza de estudio, Minimizar la del error y Controlar las extrañas." },
+                    { question: "El método más efectivo para controlar TODAS las variables extrañas es...", options: ["El apareamiento", "La eliminación", "El control estadístico", "La aleatorización"], correctAnswer: "La aleatorización", feedback: "¡Exacto! Teóricamente, al asignar al azar, los grupos se vuelven estadísticamente equivalentes en todas las variables, conocidas o no." },
+                    { question: "Maximizar la varianza experimental significa que el investigador debe...", options: ["Hacer las condiciones del estudio lo más parecidas posible", "Hacer las condiciones de la VI lo más diferentes posible", "Reducir el tamaño de la muestra", "Usar instrumentos poco fiables"], correctAnswer: "Hacer las condiciones de la VI lo más diferentes posible", feedback: "Correcto. Al hacer los tratamientos (ej. método A vs. método B) muy distintos, se le da al efecto una mejor oportunidad de manifestarse." },
+                    { question: "Si un investigador decide usar solo participantes hombres para evitar el efecto del género, está usando el control por...", options: ["Aleatorización", "Apareamiento", "Eliminación", "Inclusión en el diseño"], correctAnswer: "Eliminación", feedback: "Así es. Al hacer la muestra homogénea en esa variable, elimina su efecto, aunque esto limita la generalización de los resultados." },
+                    { question: "Minimizar la varianza del error se logra, en parte, mediante...", options: ["Condiciones de estudio poco controladas", "El aumento de la confiabilidad de las medidas", "El uso de muchos grupos", "La improvisación"], correctAnswer: "El aumento de la confiabilidad de las medidas", feedback: "Correcto. Instrumentos de medida precisos y estables (confiables) reducen las fluctuaciones aleatorias en los datos." },
+                    { question: "Un diseño de investigación es, fundamentalmente, ...", options: ["El análisis estadístico", "El resumen de la teoría", "El plan y la estructura de la investigación", "La conclusión del estudio"], correctAnswer: "El plan y la estructura de la investigación", feedback: "Correcto. El diseño es el 'plano' que guía toda la investigación, desde las hipótesis hasta el análisis de datos." },
+                    { question: "El control por apareamiento (matching) es más útil cuando la variable de apareo...", options: ["No se relaciona con la VD", "Es fácil de medir", "Se correlaciona fuertemente con la VD", "Es una variable activa"], correctAnswer: "Se correlaciona fuertemente con la VD", feedback: "Correcto. Si la variable de apareo (ej. CI) está muy relacionada con la variable dependiente (ej. rendimiento), el apareamiento será un control efectivo." },
+                    { question: "Un diseño factorial es apropiado cuando se quiere estudiar...", options: ["Una sola variable independiente", "Solo variables de atributo", "La interacción entre dos o más variables independientes", "Un estudio de caso único"], correctAnswer: "La interacción entre dos o más variables independientes", feedback: "Exacto. Los diseños factoriales son ideales para ver si el efecto de una VI depende del nivel de otra VI." },
+                    { question: "La aleatorización garantiza que los grupos experimentales serán perfectamente idénticos.", options: ["Verdadero", "Falso"], correctAnswer: "Falso", feedback: "Correcto. No garantiza identidad perfecta, sino 'equivalencia estadística'. Por puro azar, los grupos pueden diferir, pero la aleatorización hace que esto sea improbable." },
+                    { question: "Incluir una variable extraña (ej. 'clase social') como otra variable independiente en el diseño es una forma de...", options: ["Ignorarla", "Eliminarla", "Controlarla", "Maximizarla"], correctAnswer: "Controlarla", feedback: "Correcto. Al incluirla, se puede medir y aislar su efecto del resto de la varianza, controlándola y obteniendo información adicional." }
+                ]
+            },
+            "Población, Muestra y Muestreo": {
+                file: "LIBRO - Métodos de muestreo - Jacinto Rodríguez Osuna.pdf",
+                questions: [
+                    { question: "En el muestreo probabilístico, cada elemento de la población tiene una probabilidad...", options: ["Igual a cero de ser seleccionado", "Desconocida de ser seleccionado", "Conocida y no nula de ser seleccionado", "Dependiente del investigador"], correctAnswer: "Conocida y no nula de ser seleccionado", feedback: "Correcto. Esta es la característica fundamental que permite la inferencia estadística." },
+                    { question: "¿Qué tipo de muestreo divide a la población en subgrupos homogéneos (estratos)?", options: ["Muestreo por conglomerados", "Muestreo aleatorio simple", "Muestreo estratificado", "Muestreo por cuotas"], correctAnswer: "Muestreo estratificado", feedback: "Así es. La estratificación busca crear grupos internamente homogéneos para luego muestrear dentro de cada uno, aumentando la precisión." },
+                    { question: "El listado completo de todas las unidades del universo se denomina...", options: ["Muestra", "Censo", "Conglomerado", "Marco muestral"], correctAnswer: "Marco muestral", feedback: "Correcto. El marco muestral es la base desde la cual se extrae la muestra (ej. una lista de estudiantes, un mapa de viviendas)." },
+                    { question: "La principal ventaja del muestreo por conglomerados es que...", options: ["Es el más preciso", "Reduce costos y simplifica el trabajo de campo", "No necesita un marco muestral", "Funciona bien con poblaciones pequeñas"], correctAnswer: "Reduce costos y simplifica el trabajo de campo", feedback: "Correcto. Al muestrear grupos (ej. escuelas) en vez de individuos dispersos, se optimizan los recursos, aunque suele ser menos preciso." },
+                    { question: "El muestreo por cuotas es un tipo de muestreo...", options: ["Probabilístico", "No probabilístico", "Estratificado", "Sistemático"], correctAnswer: "No probabilístico", feedback: "Correcto. La selección final del individuo depende del criterio del entrevistador, no del azar, por eso es no probabilístico." },
+                    { question: "La principal desventaja del muestreo no probabilístico es que...", options: ["Es más caro", "Tarda más tiempo", "No permite, en rigor, la inferencia estadística", "Requiere un marco muestral perfecto"], correctAnswer: "No permite, en rigor, la inferencia estadística", feedback: "Exacto. Al no basarse en la probabilidad, no se puede calcular el error de muestreo ni generalizar los resultados a la población con confianza estadística." },
+                    { question: "Si tienes un listado de 1000 personas y eliges una cada 10, estás haciendo un muestreo...", options: ["Aleatorio simple", "Estratificado", "Sistemático", "Por conglomerados"], correctAnswer: "Sistemático", feedback: "Correcto. Se elige un punto de inicio al azar y luego se aplica un intervalo de selección constante." },
+                    { question: "Usar muestras en vez de censos es preferible porque...", options: ["Es más preciso siempre", "Es la única forma válida", "Ahorra tiempo, dinero y recursos", "El censo es ilegal"], correctAnswer: "Ahorra tiempo, dinero y recursos", feedback: "Así es. Las muestras permiten obtener información representativa de una población de forma mucho más eficiente que estudiando a todos sus miembros." },
+                    { question: "En el muestreo estratificado, la muestra se extrae de...", options: ["Toda la población junta", "Solo del estrato más grande", "Cada estrato de forma independiente", "Conglomerados al azar"], correctAnswer: "Cada estrato de forma independiente", feedback: "Correcto. Una vez definidos los estratos, se realiza un muestreo (ej. aleatorio simple) dentro de cada uno de ellos." },
+                    { question: "Para que una muestra sea probabilística, el proceso de selección debe ser...", options: ["Intencional", "Por conveniencia", "Aleatorio", "Basado en cuotas"], correctAnswer: "Aleatorio", feedback: "Correcto. La aleatoriedad es el pilar del muestreo probabilístico, ya que garantiza que la selección no está sesgada por el investigador." }
+                ]
+            }
+        };
+
+        // Variables globales
+        const appContainer = document.getElementById('app-container');
+        const homeScreen = document.getElementById('home-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const topicSelectionContainer = document.getElementById('topic-selection');
+        const reviewModal = document.getElementById('review-modal');
+        
+        let currentTopic = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let questions = [];
+        let selectedMode = 'study';
+        let startTime = null;
+        let timerInterval = null;
+        let timeLimit = 0;
+        let wrongAnswers = [];
+        let personalRecords = {};
+
+        // Cargar récords personales desde localStorage
+        function loadPersonalRecords() {
+            const saved = localStorage.getItem('flashcards-records');
+            if (saved) {
+                personalRecords = JSON.parse(saved);
+            }
+        }
+
+        // Guardar récords personales en localStorage
+        function savePersonalRecords() {
+            localStorage.setItem('flashcards-records', JSON.stringify(personalRecords));
+        }
+
+        // Actualizar récord personal
+        function updatePersonalRecord(topic, score, time) {
+            if (!personalRecords[topic]) {
+                personalRecords[topic] = {
+                    bestScore: 0,
+                    bestTime: Infinity,
+                    attempts: 0
+                };
+            }
+            
+            const record = personalRecords[topic];
+            record.attempts++;
+            
+            let isNewRecord = false;
+            
+            if (score > record.bestScore) {
+                record.bestScore = score;
+                isNewRecord = true;
+            }
+            
+            if (time < record.bestTime) {
+                record.bestTime = time;
+                isNewRecord = true;
+            }
+            
+            savePersonalRecords();
+            return isNewRecord;
+        }
+
+        // Inicializar la aplicación
+        function init() {
+            loadPersonalRecords();
+            homeScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            reviewModal.classList.add('hidden');
+            topicSelectionContainer.innerHTML = '';
+            
+            // Crear tarjetas de temas
+            Object.keys(quizData).forEach((topic, index) => {
+                const topicCard = document.createElement('div');
+                topicCard.className = "topic-card card rounded-2xl p-6 cursor-pointer transition-all duration-300";
+                
+                // Verificar si hay récord personal
+                const hasRecord = personalRecords[topic] && personalRecords[topic].attempts > 0;
+                const record = personalRecords[topic];
+                
+                topicCard.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white mr-4">
+                            <i class="fas fa-${getTopicIcon(index)} text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-bold text-slate-900">${topic}</h3>
+                            <p class="text-sm text-slate-600">10 preguntas de repaso</p>
+                            ${hasRecord ? `
+                                <div class="mt-1">
+                                    <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                        <i class="fas fa-trophy mr-1"></i>
+                                        Mejor: ${record.bestScore}/10
+                                    </span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${hasRecord ? '<i class="fas fa-medal text-yellow-500 text-xl"></i>' : '<i class="fas fa-arrow-right text-slate-400"></i>'}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full">
+                            ${quizData[topic].file.split(' - ')[0]}
+                        </span>
+                        ${hasRecord ? `
+                            <span class="text-xs text-slate-500">
+                                ${record.attempts} intento${record.attempts !== 1 ? 's' : ''}
+                            </span>
+                        ` : ''}
+                    </div>
+                `;
+                topicCard.onclick = () => selectTopic(topic);
+                topicSelectionContainer.appendChild(topicCard);
+            });
+        }
+
+        // Obtener icono según el tema
+        function getTopicIcon(index) {
+            const icons = ['lightbulb', 'bullseye', 'book', 'cogs', 'chart-line', 'users'];
+            return icons[index] || 'star';
+        }
+
+        // Seleccionar modo de juego
+        document.getElementById('study-mode-btn').onclick = () => {
+            selectedMode = 'study';
+            document.getElementById('study-mode-btn').classList.add('ring-4', 'ring-white/50');
+            document.getElementById('exam-mode-btn').classList.remove('ring-4', 'ring-white/50');
+        };
+
+        document.getElementById('exam-mode-btn').onclick = () => {
+            selectedMode = 'exam';
+            document.getElementById('exam-mode-btn').classList.add('ring-4', 'ring-white/50');
+            document.getElementById('study-mode-btn').classList.remove('ring-4', 'ring-white/50');
+        };
+
+        // Seleccionar tema
+        function selectTopic(topic) {
+            currentTopic = topic;
+            questions = [...quizData[topic].questions];
+            
+            // Mezclar preguntas en modo examen
+            if (selectedMode === 'exam') {
+                questions = questions.sort(() => Math.random() - 0.5);
+            }
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            wrongAnswers = [];
+            startTime = Date.now();
+            
+            homeScreen.classList.add('hidden');
+            resultsScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            
+            document.getElementById('quiz-topic-title').textContent = currentTopic;
+            
+            // Configurar timer para modo examen
+            if (selectedMode === 'exam') {
+                timeLimit = questions.length * 30; // 30 segundos por pregunta
+                document.getElementById('timer').classList.remove('hidden');
+                startTimer();
+            } else {
+                document.getElementById('timer').classList.add('hidden');
+            }
+            
+            displayQuestion();
+        }
+
+        // Timer para modo examen
+        function startTimer() {
+            let timeRemaining = timeLimit;
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                document.getElementById('time-remaining').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    showResults();
+                }
+            }, 1000);
+        }
+
+        // Mostrar pregunta
+        function displayQuestion() {
+            const questionData = questions[currentQuestionIndex];
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            
+            document.getElementById('progress-indicator').textContent = 
+                `Pregunta ${currentQuestionIndex + 1} de ${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('question-text').textContent = questionData.question;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Mezclar opciones
+            const shuffledOptions = [...questionData.options].sort(() => Math.random() - 0.5);
+            
+            shuffledOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = "btn-option w-full bg-white p-4 rounded-xl text-left border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-300 text-slate-700 font-medium";
+                button.textContent = option;
+                button.onclick = () => checkAnswer(option, questionData, button);
+                
+                // Animación de entrada escalonada
+                button.style.animationDelay = `${index * 0.1}s`;
+                button.style.animation = 'slideInUp 0.6s ease-out forwards';
+                
+                optionsContainer.appendChild(button);
+            });
+            
+            document.getElementById('feedback-container').classList.add('hidden');
+        }
+
+        // Verificar respuesta
+        function checkAnswer(selectedOption, questionData, button) {
+            const isCorrect = selectedOption === questionData.correctAnswer;
+            
+            if (isCorrect) {
+                score++;
+                button.classList.add('correct');
+                // Animación de éxito
+                createSuccessAnimation(button);
+            } else {
+                button.classList.add('incorrect');
+                wrongAnswers.push({
+                    question: questionData.question,
+                    userAnswer: selectedOption,
+                    correctAnswer: questionData.correctAnswer,
+                    feedback: questionData.feedback
+                });
+                
+                // Resaltar respuesta correcta
+                const allButtons = document.querySelectorAll('.btn-option');
+                allButtons.forEach(btn => {
+                    if (btn.textContent === questionData.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Deshabilitar todos los botones
+            document.querySelectorAll('.btn-option').forEach(btn => btn.disabled = true);
+            
+            // Mostrar retroalimentación
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackText = document.getElementById('feedback-text');
+            feedbackText.textContent = questionData.feedback;
+            feedbackContainer.classList.remove('hidden');
+            feedbackContainer.classList.add('feedback-animation');
+            
+            // Avanzar automáticamente después de un tiempo
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    displayQuestion();
+                } else {
+                    if (timerInterval) clearInterval(timerInterval);
+                    showResults();
+                }
+            }, selectedMode === 'exam' ? 2000 : 3000);
+        }
+
+        // Animación de éxito
+        function createSuccessAnimation(element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 6; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = centerX + 'px';
+                confetti.style.top = centerY + 'px';
+                confetti.style.backgroundColor = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'][i];
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        // Mostrar resultados
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            const endTime = Date.now();
+            const timeTaken = Math.floor((endTime - startTime) / 1000);
+            const minutes = Math.floor(timeTaken / 60);
+            const seconds = timeTaken % 60;
+            
+            document.getElementById('results-topic-title').textContent = currentTopic;
+            document.getElementById('final-score').textContent = `${score}/${questions.length}`;
+            document.getElementById('accuracy-percentage').textContent = 
+                `${Math.round((score / questions.length) * 100)}%`;
+            document.getElementById('time-taken').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Actualizar récord personal
+            const isNewRecord = updatePersonalRecord(currentTopic, score, timeTaken);
+            
+            // Mostrar botón de revisar errores si los hay
+            if (wrongAnswers.length > 0) {
+                document.getElementById('review-mistakes-btn').classList.remove('hidden');
+            }
+            
+            // Mostrar récords personales si existen
+            if (personalRecords[currentTopic] && personalRecords[currentTopic].attempts > 0) {
+                const record = personalRecords[currentTopic];
+                document.getElementById('personal-records').classList.remove('hidden');
+                document.getElementById('best-score').textContent = `${record.bestScore}/10`;
+                document.getElementById('best-time').textContent = formatTime(record.bestTime);
+                
+                if (isNewRecord) {
+                    document.getElementById('record-badge').classList.remove('hidden');
+                }
+            }
+            
+            // Animación de confeti para puntuaciones altas
+            if (score >= questions.length * 0.8) {
+                createConfetti();
+            }
+            
+            // Recomendaciones personalizadas
+            const recommendationsText = document.getElementById('recommendations-text');
+            const fileToRead = quizData[currentTopic].file;
+            let recommendation = '';
+            
+            if (score >= questions.length * 0.8) {
+                recommendation = `¡Excelente trabajo! Tienes un sólido dominio de <strong>${currentTopic}</strong>. Para profundizar, intenta conectar estos conceptos con los de otros temas y busca cómo se aplican en investigaciones reales de tu campo de interés.`;
+            } else if (score >= questions.length * 0.5) {
+                recommendation = `¡Buen trabajo! Has entendido los conceptos principales. Te recomendamos repasar los puntos donde tuviste dudas directamente en el material de lectura: <strong>${fileToRead}</strong>. Presta especial atención a las definiciones clave y a los ejemplos prácticos.`;
+            } else {
+                recommendation = `Este es un buen punto de partida. Te sugerimos hacer una relectura completa y atenta del material <strong>${fileToRead}</strong>. Concéntrate en entender los conceptos fundamentales antes de intentar el repaso de nuevo. ¡El esfuerzo valdrá la pena!`;
+            }
+            recommendationsText.innerHTML = recommendation;
+        }
+
+        // Formatear tiempo
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Crear efecto de confeti
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.classList.remove('hidden');
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'][Math.floor(Math.random() * 6)];
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 100);
+            }
+        }
+
+        // Funciones del modal de revisión de errores
+        function openReviewModal() {
+            reviewModal.classList.remove('hidden');
+            displayMistakes();
+        }
+
+        function closeReviewModal() {
+            reviewModal.classList.add('hidden');
+        }
+
+        function displayMistakes() {
+            const container = document.getElementById('mistakes-container');
+            container.innerHTML = '';
+            
+            if (wrongAnswers.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2">¡Perfecto!</h3>
+                        <p class="text-slate-600">No cometiste ningún error en este intento.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            wrongAnswers.forEach((mistake, index) => {
+                const mistakeCard = document.createElement('div');
+                mistakeCard.className = 'error-card rounded-xl p-6';
+                mistakeCard.innerHTML = `
+                    <div class="flex items-start mb-4">
+                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm mr-3">
+                            ${index + 1}
+                        </div>
+                        <h3 class="font-bold text-amber-800 flex-1">Pregunta</h3>
+                    </div>
+                    <p class="text-amber-900 mb-4 font-medium">${mistake.question}</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-red-100 p-4 rounded-lg border border-red-200">
+                            <p class="text-sm text-red-600 font-medium mb-1">Tu respuesta:</p>
+                            <p class="text-red-800 font-medium">${mistake.userAnswer}</p>
+                        </div>
+                        <div class="bg-green-100 p-4 rounded-lg border border-green-200">
+                            <p class="text-sm text-green-600 font-medium mb-1">Respuesta correcta:</p>
+                            <p class="text-green-800 font-medium">${mistake.correctAnswer}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <p class="text-sm text-blue-600 font-medium mb-1">Explicación:</p>
+                        <p class="text-blue-800 text-sm leading-relaxed">${mistake.feedback}</p>
+                    </div>
+                `;
+                container.appendChild(mistakeCard);
+            });
+        }
+
+        // Event listeners
+        document.getElementById('restart-quiz-btn').onclick = () => selectTopic(currentTopic);
+        document.getElementById('back-to-home-btn').onclick = init;
+        document.getElementById('review-mistakes-btn').onclick = openReviewModal;
+
+        // Iniciar la aplicación
+        init();
+    </script>
+</body>
+</html>
